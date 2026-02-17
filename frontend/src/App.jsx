@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Waiter from "./pages/Waiter";
 import Admin from "./pages/Admin";
 import Billing from "./pages/Billing";
@@ -11,14 +11,32 @@ import Sidebar from "./components/Sidebar";
 import Food from "./pages/Food";
 import Waitermobile from "./pages/Waitermobile";
 import RecipeViewer from "./pages/RecipeViewer";
-
 import AddRecipe from "./pages/AddRecipe";
-
+import { useEffect } from "react";
 
 function App() {
+  
+  // ---------------- KEEP BACKEND AWAKE ----------------
+  useEffect(() => {
+    const backendURL = "https://foodpos-server-1.onrender.com"; // Your backend URL
+
+    const pingServer = () => {
+      fetch(backendURL)
+        .then(res => console.log("Ping successful:", res.status))
+        .catch(err => console.log("Ping failed:", err));
+    };
+
+    // Ping immediately on load
+    pingServer();
+
+    // Ping every 10 minutes (600000 ms)
+    const interval = setInterval(pingServer, 10 * 60 * 1000);
+
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
+
   return (
     <Router>
-
       <div style={{ display: "flex" }}>
         <Sidebar /> {/* Left Sidebar */}
         <div style={{ flex: 1, padding: "20px" }}>
@@ -34,9 +52,9 @@ function App() {
             <Route path="/subcategory" element={<Subcategory />} />
             <Route path="/table" element={<TablePage />} />
             <Route path="/food" element={<Food />} />
-              {/* Recipe */}
+            {/* Recipe */}
             <Route path="/add-recipe" element={<AddRecipe />} />
-              <Route path="/recipestep" element={<RecipeViewer />} />
+            <Route path="/recipestep" element={<RecipeViewer />} />
           </Routes>
         </div>
       </div>
