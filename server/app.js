@@ -1,10 +1,9 @@
 // server/index.js
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
-import path from "path";
+import dotenv from "dotenv";
 
 import connectDB from "./config/db.js";
 
@@ -20,18 +19,24 @@ import billingRoutes from "./routes/billingRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
 
 dotenv.config();
+
+// ---------------- MONGODB ----------------
 connectDB();
 
+// ---------------- EXPRESS APP ----------------
 const app = express();
-
-/* ---------------- MIDDLEWARE ---------------- */
-app.use(cors());
 app.use(express.json());
 
-/* ✅ SERVE UPLOADS (IMPORTANT) */
-app.use("/uploads", express.static("uploads"));
+// ---------------- CORS ----------------
+// Allow both local dev and deployed front-end
+const FRONTEND_URL = "https://foodpos-eight.vercel.app";
+app.use(cors({
+  origin: [FRONTEND_URL, "http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
 
-/* ---------------- API ROUTES ---------------- */
+// ---------------- API ROUTES ----------------
 app.use("/api/auth", authRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/groups", groupRoutes);
@@ -42,17 +47,23 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/recipes", recipeRoutes);
 
-/* ---------------- SOCKET.IO ---------------- */
-const server = http.createServer(app);
+// ---------------- HEALTH CHECK ----------------
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "🚀 Server is running!",
+    db: mongoose.connection.readyState === 1 ? "connected" : "not connected",
+  });
+});
 
-const FRONTEND_URL = "https://foodpos-eight.vercel.app";
+// ---------------- SOCKET.IO ----------------
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [FRONTEND_URL], // allow dev + deployed client
+    origin: [FRONTEND_URL, "http://localhost:3000"], // allow dev + deployed client
     methods: ["GET", "POST"],
     credentials: true,
-  }
+  },
 });
 
 app.set("io", io);
@@ -69,15 +80,8 @@ io.on("connection", (socket) => {
   });
 });
 
-/* ---------------- SIMPLE HEALTH CHECK ---------------- */
-app.get("/", (req, res) => {
-  res.status(200).json({ message: "🚀 Server is running!" });
-});
-
-
-/* ---------------- START SERVER ---------------- */
+// ---------------- START SERVER ----------------
 const PORT = process.env.PORT || 5000;
-
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
