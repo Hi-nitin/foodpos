@@ -85,7 +85,7 @@ export default function RecipeViewer() {
 
                   {step.image && (
                     <img
-                      src={`${SERVER_URL}${step.image}`}
+                      src={`${step.image}`}
                       alt={`Step ${index + 1}`}
                     />
                   )}
