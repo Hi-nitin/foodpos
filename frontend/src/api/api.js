@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://foodpos-server-lakha.vercel.app/api"
+  baseURL: "https://foodpos-server-1.onrender.com/api"
 });
 
 // attach token

@@ -5,7 +5,7 @@ const SocketContext = createContext(null);
 
 export const SocketProvider = ({ children }) => {
   const socket = useMemo(() => {
-    return io("https://foodpos-server-lakha.vercel.app", {
+    return io("https://foodpos-server-1.onrender.com", {
       transports: ["websocket"],
       withCredentials: true,
     });
