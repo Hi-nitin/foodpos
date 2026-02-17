@@ -1,14 +1,27 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { io } from "socket.io-client";
 
-const SocketContext = createContext();
+const SocketContext = createContext(null);
 
-const socket = io("http://localhost:5000");
+export const SocketProvider = ({ children }) => {
+  const socket = useMemo(() => {
+    return io("https://foodpos-server-lakha.vercel.app", {
+      transports: ["websocket"],
+      withCredentials: true,
+    });
+  }, []);
 
-export const SocketProvider = ({ children }) => (
-  <SocketContext.Provider value={socket}>
-    {children}
-  </SocketContext.Provider>
-);
+  return (
+    <SocketContext.Provider value={socket}>
+      {children}
+    </SocketContext.Provider>
+  );
+};
 
-export const useSocket = () => useContext(SocketContext);
+export const useSocket = () => {
+  const context = useContext(SocketContext);
+  if (!context) {
+    throw new Error("useSocket must be used inside SocketProvider");
+  }
+  return context;
+};

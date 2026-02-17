@@ -60,7 +60,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [FRONTEND_URL, "http://localhost:3000"], // allow dev + deployed client
+    origin: [FRONTEND_URL], // allow dev + deployed client
     methods: ["GET", "POST"],
     credentials: true,
   },
