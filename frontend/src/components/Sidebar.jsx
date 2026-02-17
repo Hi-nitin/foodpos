@@ -29,6 +29,8 @@ export default function Sidebar() {
       <NavLink to="/subcategory" style={linkStyle}>📂 Subcategory</NavLink>
       <NavLink to="/table" style={linkStyle}>🪑 Table</NavLink>
       <NavLink to="/food" style={linkStyle}>🍔 Food</NavLink>
+      <NavLink to="/add-recipe" style={linkStyle}>🍔 add step</NavLink>
+      <NavLink to="/recipestep" style={linkStyle}>How to make Coffee</NavLink>
     </div>
   );
 }

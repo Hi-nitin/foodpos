@@ -6,12 +6,16 @@ const router = express.Router();
 
 const FIXED_GROUPS = ["G1", "G2", "G3", "G4"];
 
-/* ---------------- GET ACTIVE ORDERS (ADMIN) ---------------- */
+/* =========================================================
+   GET ACTIVE ORDERS (ADMIN / KITCHEN)
+   ========================================================= */
 router.get("/", async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["draft", "sent"] }
-    }).populate("tableId");
+    })
+      .populate("tableId") // ✅ needed for admin view
+      .sort({ createdAt: 1 });
 
     res.json(orders);
   } catch (err) {
@@ -20,11 +24,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* ---------------- ADD / UPDATE ORDER (WAITER SEND) ---------------- */
+/* =========================================================
+   ADD / UPDATE ORDER (WAITER SEND)
+   ========================================================= */
 router.post("/", async (req, res) => {
   try {
     const { tableId, groupName, items } = req.body;
 
+    // ✅ basic validation
     if (!tableId || !groupName || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "Invalid order data" });
     }
@@ -38,7 +45,7 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ message: "Table not found" });
     }
 
-    // 🔑 One active order per table + group
+    // 🔑 ONE ACTIVE ORDER PER TABLE + GROUP
     let order = await Order.findOne({
       tableId,
       groupName,
@@ -53,6 +60,7 @@ router.post("/", async (req, res) => {
         status: "sent"
       });
     } else {
+      // ✅ merge items
       order.items.push(...items);
       order.status = "sent";
     }
@@ -69,11 +77,16 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* ---------------- COMPLETE ORDER (BILLING DONE) ---------------- */
+/* =========================================================
+   COMPLETE ORDER (AFTER BILLING)
+   ========================================================= */
 router.put("/:orderId/complete", async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     order.status = "completed";
     await order.save();
@@ -88,19 +101,23 @@ router.put("/:orderId/complete", async (req, res) => {
   }
 });
 
-/* ---------------- REMOVE ITEM ---------------- */
+/* =========================================================
+   REMOVE SINGLE ITEM FROM ORDER
+   ========================================================= */
 router.delete("/:orderId/item/:itemId", async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
-    const order = await Order.findById(orderId);
 
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     order.items = order.items.filter(
-      (i) => i._id.toString() !== itemId
+      item => item._id.toString() !== itemId
     );
 
-    // If no items → delete order
+    // 🔥 delete order if empty
     if (order.items.length === 0) {
       await Order.findByIdAndDelete(orderId);
     } else {
@@ -117,7 +134,9 @@ router.delete("/:orderId/item/:itemId", async (req, res) => {
   }
 });
 
-/* ---------------- DELETE FULL ORDER ---------------- */
+/* =========================================================
+   DELETE FULL ORDER (CANCEL TABLE/GROUP)
+   ========================================================= */
 router.delete("/:orderId", async (req, res) => {
   try {
     await Order.findByIdAndDelete(req.params.orderId);

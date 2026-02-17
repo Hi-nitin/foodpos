@@ -8,7 +8,7 @@ const FIXED_GROUPS = ["G1", "G2", "G3", "G4"];
 export default function Waiter() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState("");
 
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -30,18 +30,14 @@ export default function Waiter() {
   /* ---------------- HANDLERS ---------------- */
   const handleTableSelect = (table) => {
     setSelectedTable(table);
-    setSelectedGroup(null);
+    setSelectedGroup("");
     setSearch("");
     setSuggestions([]);
     setLocalItems([]);
   };
 
   const handleGroupSelect = (groupName) => {
-    setSelectedGroup({
-      _id: `${selectedTable._id}_${groupName}`,
-      name: groupName,
-      tableId: selectedTable._id,
-    });
+    setSelectedGroup(groupName);
   };
 
   /* ---------------- LIVE SEARCH ---------------- */
@@ -84,19 +80,28 @@ export default function Waiter() {
     setSuggestions([]);
   };
 
+  /* ---------------- SEND ORDER ---------------- */
   const handleSendOrder = async () => {
-    if (!selectedGroup || localItems.length === 0) {
-      alert("Select group and add items");
+    if (!selectedTable || !selectedGroup || localItems.length === 0) {
+      alert("Select table, group and add items");
       return;
     }
 
-    await api.post(`/orders/${selectedGroup._id}/send`, {
-      items: localItems,
-    });
+    try {
+      await api.post("/orders", {
+        tableId: selectedTable._id,
+        groupName: selectedGroup,
+        items: localItems,
+      });
 
-    setLocalItems([]);
-    socket.emit("refreshOrders");
-    alert("Order sent");
+      setLocalItems([]);
+      updateOrders();
+      socket.emit("refreshOrders");
+      alert("Order sent successfully");
+    } catch (err) {
+      console.error("Send order failed", err);
+      alert("Failed to send order");
+    }
   };
 
   /* ---------------- UI ---------------- */
@@ -136,11 +141,11 @@ export default function Waiter() {
         </>
       )}
 
-      {/* STEP 3: SEARCH BOX */}
+      {/* STEP 3: SEARCH */}
       {selectedGroup && (
         <>
           <h3>
-            Table {selectedTable.name} | Group {selectedGroup.name}
+            Table {selectedTable.name} | Group {selectedGroup}
           </h3>
 
           <input
@@ -156,7 +161,6 @@ export default function Waiter() {
             }}
           />
 
-          {/* LIVE SUGGESTIONS */}
           {suggestions.length > 0 && (
             <div
               style={{
@@ -176,7 +180,7 @@ export default function Waiter() {
                     borderBottom: "1px solid #eee",
                   }}
                 >
-                  {f.name} – ${f.price}
+                  {f.name} – ₹{f.price}
                 </div>
               ))}
             </div>
@@ -191,7 +195,7 @@ export default function Waiter() {
           <ul>
             {localItems.map((i, idx) => (
               <li key={idx}>
-                {i.name} x{i.qty} = ${i.qty * i.price}
+                {i.name} x{i.qty} = ₹{i.qty * i.price}
               </li>
             ))}
           </ul>

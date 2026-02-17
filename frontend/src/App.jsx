@@ -10,6 +10,10 @@ import BillingHistory from "./pages/BillingHistory";
 import Sidebar from "./components/Sidebar";
 import Food from "./pages/Food";
 import Waitermobile from "./pages/Waitermobile";
+import RecipeViewer from "./pages/RecipeViewer";
+
+import AddRecipe from "./pages/AddRecipe";
+
 
 function App() {
   return (
@@ -30,6 +34,9 @@ function App() {
             <Route path="/subcategory" element={<Subcategory />} />
             <Route path="/table" element={<TablePage />} />
             <Route path="/food" element={<Food />} />
+              {/* Recipe */}
+            <Route path="/add-recipe" element={<AddRecipe />} />
+              <Route path="/recipestep" element={<RecipeViewer />} />
           </Routes>
         </div>
       </div>

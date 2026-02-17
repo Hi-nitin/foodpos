@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
+import path from "path";
 
 import connectDB from "./config/db.js";
 
@@ -16,17 +17,21 @@ import subCategoryRoutes from "./routes/subCategoryRoutes.js";
 import foodRoutes from "./routes/foodRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import billingRoutes from "./routes/billingRoutes.js";
+import recipeRoutes from "./routes/recipeRoutes.js";
 
 dotenv.config();
 connectDB();
 
 const app = express();
 
-// Middleware
+/* ---------------- MIDDLEWARE ---------------- */
 app.use(cors());
 app.use(express.json());
 
-// ---------------- API ROUTES ----------------
+/* ✅ SERVE UPLOADS (IMPORTANT) */
+app.use("/uploads", express.static("uploads"));
+
+/* ---------------- API ROUTES ---------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/groups", groupRoutes);
@@ -35,20 +40,22 @@ app.use("/api/subcategories", subCategoryRoutes);
 app.use("/api/foods", foodRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/recipes", recipeRoutes);
 
-// ---------------- SOCKET.IO ----------------
+/* ---------------- SOCKET.IO ---------------- */
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-app.set("io", io); // allow routes to access io
+app.set("io", io);
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
   socket.on("orderUpdated", () => {
-    io.emit("refreshOrders"); // notify all clients
+    io.emit("refreshOrders");
   });
 
   socket.on("disconnect", () => {
@@ -56,8 +63,9 @@ io.on("connection", (socket) => {
   });
 });
 
-// ---------------- START SERVER ----------------
+/* ---------------- START SERVER ---------------- */
 const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
