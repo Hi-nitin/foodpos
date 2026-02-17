@@ -45,8 +45,14 @@ app.use("/api/recipes", recipeRoutes);
 /* ---------------- SOCKET.IO ---------------- */
 const server = http.createServer(app);
 
+const FRONTEND_URL = "https://foodpos-eight.vercel.app";
+
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: [FRONTEND_URL], // allow dev + deployed client
+    methods: ["GET", "POST"],
+    credentials: true,
+  }
 });
 
 app.set("io", io);
