@@ -3,7 +3,7 @@ import Food from "../models/Food.js";
 
 const router = express.Router();
 
-/* ---------------- GET FOODS (SEARCH + FILTER) ---------------- */
+/* ---------------- GET FOODS (SEARCH) ---------------- */
 router.get("/", async (req, res) => {
   try {
     const { search } = req.query;
@@ -12,13 +12,12 @@ router.get("/", async (req, res) => {
 
     if (search && search.trim() !== "") {
       filter.name = {
-        // ✅ WORD-BOUNDARY SEARCH (FIXES veg → pasta issue)
         $regex: `\\b${search.trim()}`,
         $options: "i",
       };
     }
 
-    const foods = await Food.find(filter).limit(10); // limit for live search
+    const foods = await Food.find(filter).limit(10);
     res.json(foods);
   } catch (err) {
     console.error("FOOD FETCH ERROR:", err);
@@ -29,8 +28,15 @@ router.get("/", async (req, res) => {
 /* ---------------- ADD FOOD ---------------- */
 router.post("/", async (req, res) => {
   try {
-    const food = new Food(req.body);
+    const { name, price } = req.body;
+
+    if (!name || !price) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const food = new Food({ name, price });
     await food.save();
+
     res.json(food);
   } catch (err) {
     res.status(400).json({ message: err.message });

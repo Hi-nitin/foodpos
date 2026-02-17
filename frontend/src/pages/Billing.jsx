@@ -4,7 +4,7 @@ import api from "../api/api";
 export default function Billing() {
   const [completedOrders, setCompletedOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [discount, setDiscount] = useState(0);
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   // ---------------- LOAD COMPLETED ORDERS ----------------
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Billing() {
 
   const handleSelectOrder = (order) => {
     setSelectedOrder(order);
-    setDiscount(0);
+    setDiscountPercent(0);
   };
 
   const handleSaveBill = async () => {
@@ -31,7 +31,7 @@ export default function Billing() {
     try {
       await api.post("/billing", {
         orderId: selectedOrder._id,
-        discount: Number(discount) || 0,
+        discountPercent: Number(discountPercent) || 0,
       });
 
       alert("Bill saved successfully!");
@@ -43,6 +43,7 @@ export default function Billing() {
     }
   };
 
+  // ---------------- CALCULATIONS ----------------
   const totalAmount = selectedOrder
     ? selectedOrder.items.reduce(
         (sum, i) => sum + i.price * i.qty,
@@ -50,7 +51,10 @@ export default function Billing() {
       )
     : 0;
 
-  const finalTotal = totalAmount - (Number(discount) || 0);
+  const discountAmount =
+    (totalAmount * (Number(discountPercent) || 0)) / 100;
+
+  const finalTotal = Math.max(totalAmount - discountAmount, 0);
 
   // ---------------- UI ----------------
   return (
@@ -104,21 +108,32 @@ export default function Billing() {
           </ul>
 
           <p>
-            <strong>Total:</strong> ₹{totalAmount}
+            <strong>Total:</strong> ₹{totalAmount.toFixed(2)}
           </p>
 
+          {/* ✅ Percentage Discount */}
           <label>
-            Discount: ₹
+            Discount (%):
             <input
               type="number"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
+              min="0"
+              max="100"
+              value={discountPercent}
+              onChange={(e) =>
+                setDiscountPercent(
+                  Math.min(100, Math.max(0, e.target.value))
+                )
+              }
               style={{ marginLeft: "5px", width: "80px" }}
             />
           </label>
 
           <p>
-            <strong>Final Total:</strong> ₹{finalTotal}
+            <strong>Discount Amount:</strong> ₹{discountAmount.toFixed(2)}
+          </p>
+
+          <p>
+            <strong>Final Total:</strong> ₹{finalTotal.toFixed(2)}
           </p>
 
           <button onClick={handleSaveBill} style={{ marginTop: "10px" }}>

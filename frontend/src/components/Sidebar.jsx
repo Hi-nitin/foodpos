@@ -25,8 +25,7 @@ export default function Sidebar() {
 
       {/* Setup */}
       <h4 style={{ marginTop: "20px" }}>Setup</h4>
-      <NavLink to="/category" style={linkStyle}>🏷 Category</NavLink>
-      <NavLink to="/subcategory" style={linkStyle}>📂 Subcategory</NavLink>
+  
       <NavLink to="/table" style={linkStyle}>🪑 Table</NavLink>
       <NavLink to="/food" style={linkStyle}>🍔 Food</NavLink>
       <NavLink to="/add-recipe" style={linkStyle}>🍔 add step</NavLink>

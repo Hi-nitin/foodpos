@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/completed-orders", async (req, res) => {
   try {
     const orders = await Order.find({ status: "completed" })
-      .populate("tableId"); // ✅ ONLY tableId
+      .populate("tableId");
 
     res.json(orders);
   } catch (err) {
@@ -17,40 +17,47 @@ router.get("/completed-orders", async (req, res) => {
   }
 });
 
-/* ---------------- SAVE BILL ---------------- */
+/* ---------------- SAVE BILL (WITH % DISCOUNT) ---------------- */
 router.post("/", async (req, res) => {
   try {
-    const { orderId, discount = 0 } = req.body;
+    const { orderId, discountPercent = 0 } = req.body;
 
     const order = await Order.findById(orderId).populate("tableId");
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    // 1️⃣ Calculate total
     const total = order.items.reduce(
       (sum, i) => sum + i.price * i.qty,
       0
     );
 
-    const finalTotal = total - discount;
+    // 2️⃣ Calculate discount amount from %
+    const discountAmount = (total * discountPercent) / 100;
 
+    // 3️⃣ Prevent negative totals
+    const finalTotal = Math.max(total - discountAmount, 0);
+
+    // 4️⃣ Create bill
     const bill = new Bill({
       orderId: order._id,
-      tableId: order.tableId._id,
-      groupName: order.groupName, // ✅ G1–G4
+      tableId: order.tableId?._id,
+      groupName: order.groupName,
       items: order.items.map(i => ({
         name: i.name,
         price: i.price,
         qty: i.qty
       })),
       total,
-      discount,
+      discountPercent,
+      discountAmount,
       finalTotal,
     });
 
     await bill.save();
 
-    // ✅ REMOVE order after billing
+    // ✅ Remove order after billing
     await Order.findByIdAndDelete(orderId);
 
     res.json(bill);
@@ -78,7 +85,7 @@ router.get("/history", async (req, res) => {
     }
 
     const bills = await Bill.find(filter)
-      .populate("tableId") // ✅ ONLY tableId
+      .populate("tableId")
       .sort({ createdAt: -1 });
 
     const today = new Date();

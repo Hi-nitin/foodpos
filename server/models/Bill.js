@@ -23,9 +23,27 @@ const billSchema = new mongoose.Schema(
         price: Number,
       },
     ],
-    totalAmount: Number,
-    discount: Number,
-    finalTotal: Number,
+
+    // ✅ Updated fields
+    total: {
+      type: Number,
+      required: true,
+    },
+
+    discountPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    discountAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    finalTotal: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true }
 );

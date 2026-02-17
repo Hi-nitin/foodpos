@@ -63,6 +63,12 @@ io.on("connection", (socket) => {
   });
 });
 
+/* ---------------- SIMPLE HEALTH CHECK ---------------- */
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "🚀 Server is running!" });
+});
+
+
 /* ---------------- START SERVER ---------------- */
 const PORT = process.env.PORT || 5000;
 
